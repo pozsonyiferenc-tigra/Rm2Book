@@ -7,7 +7,7 @@ Redmine projekt teljes exportálása AI-barát markdown formátumba. NotebookLM-
 - **Teljes adatkinyerés**: hibajegyek, wiki, hírek, verziók, időbejegyzések, fájlok, projekt info
 - **Teljes történet**: minden journal entry, minden wiki verzió, időbélyeggel
 - **AI-optimalizált output**: kompakt, strukturált markdown, minimális token-overhead
-- **Automatikus darabolás**: ha megközelíti a NotebookLM 500K szavas limitjét
+- **Automatikus darabolás**: `split_limit_words` alapján, issue-határokon (egy issue soha nem szakad ketté)
 - **Moduláris**: csak a szükséges modulok futtatása
 - **Konfigurálható tömörség**: verbose (önmagyarázó) vagy compact (1 betűs kódok) mód
 
@@ -41,7 +41,8 @@ Szerkeszd a `config.json` fájlt:
   "project_id": "my-project",
   "output_dir": "output",
   "modules": ["project", "versions", "files", "issues", "wiki", "news", "time_entries"],
-  "compact_fields": false
+  "compact_fields": false,
+  "split_limit_words": 450000
 }
 ```
 
@@ -55,6 +56,7 @@ Szerkeszd a `config.json` fájlt:
 | `output_dir` | nem | `output` | Kimeneti könyvtár |
 | `modules` | nem | mind | Futtatandó modulok listája |
 | `compact_fields` | nem | `false` | `true`: tömör 1 betűs kódok (P:, S:, A:), `false`: teljes szavak (Priority:, Status:, Assigned:) |
+| `split_limit_words` | nem | `450000` | Issue fájl darabolási limit szószámban. Issue-határokon vág, egy issue soha nem szakad ketté. |
 
 ### API kulcs megszerzése
 
@@ -120,18 +122,18 @@ Output: output/
 | Fájl | Tartalom |
 |------|----------|
 | `01_project_and_meta.md` | Projekt info, tagok, verziók, kategóriák, fájl metaadatok |
-| `02_issues.md` | Minden hibajegy teljes változás-történettel |
+| `02_issues.md` | Minden hibajegy teljes változás-történettel (darabolva: `02_issues_001.md`, `_002.md`, stb.) |
 | `03_wiki.md` | Minden wiki oldal, minden korábbi verzió időbélyeggel |
 | `04_activity.md` | Hírek, időbejegyzések |
 
-Ha az issue fájl megközelíti a 450K szavas limitet, automatikusan darabolódik: `02_issues_001.md`, `02_issues_002.md`, stb.
+Ha az issue-k össz szószáma meghaladja a `split_limit_words` értéket (alapért. 450K), automatikusan darabolódik: `02_issues_001.md`, `02_issues_002.md`, stb. A darabolás mindig issue-határokon történik — egy issue soha nem szakad ketté.
 
 ## Output formátum
 
 ### Issue (verbose mód, alapértelmezett)
 
 ```markdown
-## #42 [Bug] Login button not working (Closed)
+## ID:42 [Bug] Login button not working (Closed)
 Priority:High | Assigned:Kiss János | Version:v2.0 | Category:Backend | 240115..240320 | Done:70%
 
 A login gomb nem reagál kattintásra...
@@ -140,13 +142,15 @@ A login gomb nem reagál kattintásra...
 [240117 14:22 Nagy É.] "Javítottam a click handler-t"
   Assigned:Kiss J.→Nagy É. | Estimated:→4h
 📎 screenshot.png (Kiss J. 240115 245KB)
-~#124 ~blocked:#100
+~ID:124 ~blocked:ID:100
+
+---
 ```
 
 ### Issue (compact mód, `compact_fields: true`)
 
 ```markdown
-## #42 [Bug] Login button not working (Closed)
+## ID:42 [Bug] Login button not working (Closed)
 P:High | A:Kiss János | V:v2.0 | C:Backend | 240115..240320 | Done:70%
 
 A login gomb nem reagál kattintásra...
@@ -154,6 +158,8 @@ A login gomb nem reagál kattintásra...
 [240116 10:30 Kiss J.] S:New→InProgress
 [240117 14:22 Nagy É.] "Javítottam a click handler-t"
   A:Kiss J.→Nagy É. | Est:→4h
+
+---
 ```
 
 Compact módban a fájl tetejére legenda kerül:
@@ -194,7 +200,7 @@ v2.0 | Open | Due:240601 | "Release description"
 [240301 Kiss J.] "News title" Content here...
 
 # Time entries (128)
-[240301 Kiss J. #42 Dev 2.5h] "Implemented login fix"
+[240301 Kiss J. ID:42 Dev 2.5h] "Implemented login fix"
 ```
 
 ## Formátum konvenciók
@@ -207,20 +213,21 @@ v2.0 | Open | Due:240601 | "Release description"
 | Személynév (journal) | Rövidítve | `Kiss J.` |
 | Személynév (meta/fejléc) | Teljes | `Kiss János` |
 | Csatolmány | `📎 fájl (szerző dátum méret)` | `📎 spec.pdf (Kiss J. 240110 1.2MB)` |
-| Kapcsolat | `~prefix:#ID` | `~blocked:#100` |
-| Gyermek issue | `^#ID Subject` | `^#55 Fix login CSS` |
+| Kapcsolat | `~prefix:ID:szám` | `~blocked:ID:100` |
+| Gyermek issue | `^ID:szám Subject` | `^ID:55 Fix login CSS` |
+| Issue elválasztó | `---` | Vízszintes vonal minden issue után |
 | Egyéni mező | `cf:Név:Érték` | `cf:Client:ACME` |
 
 ### Kapcsolat típusok
 
 | Redmine | Output |
 |---------|--------|
-| relates | `~#ID` |
-| blocks | `~blocks:#ID` |
-| blocked by | `~blocked:#ID` |
-| duplicates | `~dup:#ID` |
-| precedes | `~precedes:#ID` |
-| follows | `~follows:#ID` |
+| relates | `~ID:szám` |
+| blocks | `~blocks:ID:szám` |
+| blocked by | `~blocked:ID:szám` |
+| duplicates | `~dup:ID:szám` |
+| precedes | `~precedes:ID:szám` |
+| follows | `~follows:ID:szám` |
 
 ## Modulok
 
@@ -287,8 +294,9 @@ docker run -v $(pwd)/config.json:/app/config.json -v $(pwd)/output:/app/output r
 
 ## NotebookLM limitek
 
-- **Max 50 forrás** per notebook → az output 4 fájl (alapesetben), jól belefér
-- **Max 500K szó** per forrás → automatikus darabolás 450K szónál (biztonsági margó)
+- **Max 50 forrás** per notebook → a `split_limit_words`-szel szabályozható, hogy hány fájl keletkezzen
+- **Max 500K szó** per forrás → alapértelmezett darabolás 450K szónál (biztonsági margó)
+- Nagy projektnél (pl. 16K+ issue) akár 14+ issue fájl is keletkezhet — ilyenkor érdemes a limitet magasan tartani (450K)
 - A verbose mód (~45KB extra 500 issue-nál) elhanyagolható overhead a limithez képest
 
 ## Hibaelhárítás

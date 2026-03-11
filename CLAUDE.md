@@ -32,7 +32,7 @@ Minden modul egyetlen `export(client, project_id, config)` függvényt exportál
 
 ### Output formátum
 - Minél kevesebb fájl (a felhasználó más forrásokat is tölt NotebookLM-be)
-- Cél: 3-5 markdown fájl, max ~7 ha nagyon nagy a projekt
+- Cél: minél kevesebb fájl, `split_limit_words` konfig szabályozza (alapért. 450K szó)
 - AI-optimalizált: strukturált fejlécek, táblázatok, idővonal, kereshető
 - Textile tartalom változatlanul marad (az AI ugyanúgy érti, konverzió felesleges overhead)
 - Nagy issue-set darabolása csak ha szükséges (fájlméret limit miatt)
@@ -49,17 +49,17 @@ Minden modul egyetlen `export(client, project_id, config)` függvényt exportál
 
 ## Eldöntött kérdések
 - [x] Wiki verzió-történet: **MINDEN verziót** lekérni, időbélyeggel
-- [x] NotebookLM source limit: **Minél kevesebb fájl** (3-5 db), mert más források is kellenek
+- [x] NotebookLM source limit: **Minél kevesebb fájl**, `split_limit_words`-szel szabályozható
 - [x] Textile→Markdown konverzió: **Nem**, felesleges — az AI ugyanúgy érti a Textile-t
 - [x] Csatolmányok: **Csak metaadat** (fájlnév, méret, feltöltő, dátum)
 - [x] Több projekt: **Nem**, egyetlen projekt exportálása
 
-## Output fájl struktúra (tervezett)
+## Output fájl struktúra
 
 | Fájl | Tartalom |
 |------|----------|
 | `01_project_and_meta.md` | Projekt info, tagok, verziók, kategóriák, fájlok metaadatai |
-| `02_issues.md` | Minden hibajegy teljes történettel (darabolva ha >500KB) |
+| `02_issues.md` | Minden hibajegy teljes történettel (automatikus darabolás `split_limit_words` alapján: `02_issues_001.md`, `02_issues_002.md`, stb.) |
 | `03_wiki.md` | Minden wiki oldal, minden verzió időbélyeggel |
 | `04_activity.md` | Hírek, időbejegyzések |
 
@@ -89,7 +89,7 @@ Fájl fejléc (egyszer):
 
 Egy issue (verbose mód, `compact_fields: false` — alapértelmezett):
 ```markdown
-## #42 [Bug] Login button not working (Closed)
+## ID:42 [Bug] Login button not working (Closed)
 Priority:High | Assigned:Kiss János | Version:v2.0 | Category:Backend | 240115..240320 | Done:70%
 
 A login gomb nem reagál kattintásra...
@@ -98,12 +98,14 @@ A login gomb nem reagál kattintásra...
 [240117 14:22 Nagy É.] "Komment szövege natúran, ahogy a Redmine-ban van"
   Assigned:Kiss J.→Nagy É. | Estimated:→4h
 📎 screenshot.png (Kiss J. 240115 245KB)
-~#124 ~blocked:#100
+~ID:124 ~blocked:ID:100
+
+---
 ```
 
 Ugyanez compact módban (`compact_fields: true` — legenda a fájl tetején):
 ```markdown
-## #42 [Bug] Login button not working (Closed)
+## ID:42 [Bug] Login button not working (Closed)
 P:High | A:Kiss János | V:v2.0 | C:Backend | 240115..240320 | Done:70%
 
 A login gomb nem reagál kattintásra...
@@ -112,20 +114,24 @@ A login gomb nem reagál kattintásra...
 [240117 14:22 Nagy É.] "Komment szövege natúran, ahogy a Redmine-ban van"
   A:Kiss J.→Nagy É. | Est:→4h
 📎 screenshot.png (Kiss J. 240115 245KB)
-~#124 ~blocked:#100
+~ID:124 ~blocked:ID:100
+
+---
 ```
 
 Szabályok:
-- Fejléc: `## #ID [Tracker] Subject (Status)`
+- Fejléc: `## ID:szám [Tracker] Subject (Status)`
+- Issue hivatkozás mindenhol: `ID:szám` (nem `#szám`)
 - Metaadatok: egyetlen sor, `|`-vel elválasztva, csak nem-üres mezők
 - Leírás: közvetlenül a meta sor után, eredeti nyelven
 - Journal: `[YYMMDD HH:MM Név] mezőváltozások` — komment idézőjelben
 - Komment alatti mezőváltozások: behúzással, egy sorban
 - Csatolmány: `📎 fájlnév (szerző dátum méret)`
-- Kapcsolatok: `~#ID` (relates), `~blocks:#ID`, `~blocked:#ID`, `~dup:#ID`
+- Kapcsolatok: `~ID:szám` (relates), `~blocks:ID:szám`, `~blocked:ID:szám`, `~dup:ID:szám`
 - Egyéni mezők: `cf:Mezőnév:Érték` a meta sorban ha van
-- Gyermek issue: `^#ID Subject` (rövid, egy sor)
+- Gyermek issue: `^ID:szám Subject` (rövid, egy sor)
 - Személynevek: journal-ban rövidítve (Kiss J.), fejlécben/meta-ban teljes
+- Elválasztó: `---` minden issue után
 
 ### Wiki formátum
 
@@ -173,15 +179,19 @@ v1.0 | Closed | 231215 | "First release"
 
 # Time entries (128)
 T=Tracker A=Activity
-[240301 Kiss J. #42 Dev 2.5h] "Implemented login fix"
-[240228 Nagy É. #43 Test 1.0h] "Tested registration"
+[240301 Kiss J. ID:42 Dev 2.5h] "Implemented login fix"
+[240228 Nagy É. ID:43 Test 1.0h] "Tested registration"
 ```
 
+## Megvalósított optimalizációk
+- [x] Fájldarabolás: `split_limit_words` konfig (alapért. 450K) — issue-határokon vág, egy issue soha nem szakad ketté
+- [x] `ID:szám` formátum mindenhol (nem `#szám`) — NotebookLM-ben kereshető
+- [x] `---` elválasztó minden issue után
+- [x] Compact mód: `compact_fields: true` — 1 betűs kódok + legenda
+
 ## Nyitott kérdések
-- [ ] Fájlméret limit: mekkora markdown fájlt fogad el a NotebookLM? (500K szó a dokumentált limit)
-  - Futásidejű szószám-ellenőrzés + automatikus darabolás ha közelít a limithez
-  - Alapértelmezett értékek kihagyása (pl. P:Normal nem kerül be)
-  - Journal tömörítés: komment nélküli mezőváltozások egy sorban
+- [ ] Alapértelmezett értékek kihagyása (pl. P:Normal nem kerül be)
+- [ ] Journal tömörítés: komment nélküli mezőváltozások egy sorban
 
 ## Config referencia
 
@@ -194,6 +204,7 @@ T=Tracker A=Activity
   "modules": ["project", "versions", "files",     // Alapértelmezett: mind
                "issues", "wiki", "news",
                "time_entries"],
-  "compact_fields": false                          // true: 1 betűs kódok + legenda
+  "compact_fields": false,                         // true: 1 betűs kódok + legenda
+  "split_limit_words": 450000                      // Darabolási limit szószámban
 }
 ```

@@ -4,5 +4,6 @@
   "project_id": "your-project-id",
   "output_dir": "output",
   "modules": ["project", "versions", "files", "issues", "wiki", "news", "time_entries"],
-  "compact_fields": false
+  "compact_fields": false,
+  "split_limit_words": 450000
 }

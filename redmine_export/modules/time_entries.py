@@ -27,7 +27,7 @@ def export(client, project_id, config):
         date = fmt_date_only(t.get("spent_on", ""))
         user = short_name(t.get("user", {}).get("name", ""))
         issue = t.get("issue", {})
-        issue_ref = f"#{issue['id']}" if issue else ""
+        issue_ref = f"ID:{issue['id']}" if issue else ""
         activity = t.get("activity", {}).get("name", "")
         hours = t.get("hours", 0)
         comment = t.get("comments", "")

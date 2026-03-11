@@ -14,6 +14,7 @@ REL_PREFIX = {
     "copied_to": "~copied:",
     "copied_from": "~from:",
 }
+DEFAULT_SPLIT_LIMIT = 450000
 
 # Verbose: full English labels (self-documenting, no legend needed)
 FIELD_CODES_VERBOSE = {
@@ -107,7 +108,7 @@ def _format_issue(issue, lookups, compact=False):
     status = issue.get("status", {}).get("name", "")
 
     # Header
-    lines.append(f"## #{iid} [{tracker}] {subject} ({status})")
+    lines.append(f"## ID:{iid} [{tracker}] {subject} ({status})")
 
     # Meta line: only non-empty fields
     meta = []
@@ -125,7 +126,7 @@ def _format_issue(issue, lookups, compact=False):
         meta.append(f"{mf['category']}{category.get('name', '')}")
     parent = issue.get("parent", {})
     if parent:
-        meta.append(f"^#{parent.get('id', '')}")
+        meta.append(f"^ID:{parent.get('id', '')}")
 
     # Date range
     created = fmt_date_only(issue.get("created_on", ""))
@@ -218,13 +219,13 @@ def _format_issue(issue, lookups, compact=False):
         if other == iid:
             other = r.get("issue_id", "")
         prefix = REL_PREFIX.get(rtype, "~")
-        lines.append(f"{prefix}#{other}")
+        lines.append(f"{prefix}ID:{other}")
 
     # Children
     for c in issue.get("children", []):
-        lines.append(f"^#{c.get('id', '')} {c.get('subject', '')}")
+        lines.append(f"^ID:{c.get('id', '')} {c.get('subject', '')}")
 
-    lines.append("")
+    lines.append("\n---\n")
     return "\n".join(lines)
 
 
@@ -263,7 +264,7 @@ def export(client, project_id, config):
     header += "\n---\n\n"
 
     # Format all issues, split by word count if needed
-    max_words = 450000  # Safety margin under 500K
+    max_words = config.get("split_limit_words", DEFAULT_SPLIT_LIMIT)
     files = {}
     current_content = header
     file_num = 1
