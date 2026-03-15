@@ -4,7 +4,7 @@ Redmine projekt teljes exportálása AI-barát markdown formátumba. NotebookLM-
 
 ## Funkciók
 
-- **Teljes adatkinyerés**: hibajegyek, wiki (alprojektekkel), DMSF dokumentumok, hírek, verziók, időbejegyzések, fájlok, projekt info
+- **Teljes adatkinyerés**: hibajegyek, wiki (alprojektekkel), dokumentumok, DMSF, hírek, verziók, időbejegyzések, fájlok, projekt info
 - **Teljes történet**: minden journal entry, minden wiki verzió, időbélyeggel
 - **AI-optimalizált output**: kompakt, strukturált markdown, minimális token-overhead
 - **Automatikus darabolás**: `split_limit_words` alapján, issue-határokon (egy issue soha nem szakad ketté)
@@ -40,7 +40,7 @@ Szerkeszd a `config.json` fájlt:
   "api_key": "your-api-key-here",
   "project_id": "my-project",
   "output_dir": "output",
-  "modules": ["project", "versions", "files", "dmsf", "issues", "wiki", "news", "time_entries"],
+  "modules": ["project", "versions", "files", "documents", "dmsf", "issues", "wiki", "news", "time_entries"],
   "compact_fields": false,
   "split_limit_words": 450000
 }
@@ -121,7 +121,7 @@ Output: output/
 
 | Fájl | Tartalom |
 |------|----------|
-| `01_project_and_meta.md` | Projekt info, tagok, verziók, kategóriák, fájl metaadatok, DMSF dokumentumfa |
+| `01_project_and_meta.md` | Projekt info, tagok, verziók, kategóriák, fájlok, dokumentumok, DMSF dokumentumfa |
 | `02_issues.md` | Minden hibajegy teljes változás-történettel (darabolva: `02_issues_001.md`, `_002.md`, stb.) |
 | `03_wiki.md` | Minden wiki oldal (alprojektekből is, rekurzívan), minden korábbi verzió időbélyeggel |
 | `04_activity.md` | Hírek, időbejegyzések |
@@ -261,6 +261,7 @@ Minden modul külön ki-/bekapcsolható a `modules` config mezőben:
 | `project` | Projekt info, tagok, kategóriák, státuszok, prioritások | `01_project_and_meta.md` |
 | `versions` | Verziók / mérföldkövek | `01_project_and_meta.md` |
 | `files` | Feltöltött fájlok metaadatai | `01_project_and_meta.md` |
+| `documents` | Redmine beépített dokumentumok (cím, leírás, csatolmányok) | `01_project_and_meta.md` |
 | `dmsf` | DMSF dokumentumfa + fájl metaadatok + revíziók | `01_project_and_meta.md` |
 | `issues` | Hibajegyek + teljes változás-történet | `02_issues.md` |
 | `wiki` | Wiki oldalak + minden korábbi verzió (alprojektekkel, rekurzív) | `03_wiki.md` |
@@ -285,6 +286,7 @@ Rm2Book/
         ├── files.py              # Fájl metaadatok
         ├── issues.py             # Hibajegyek + history
         ├── wiki.py               # Wiki + verzió history (alprojektekkel)
+        ├── documents.py          # Redmine beépített dokumentumok
         ├── dmsf.py               # DMSF dokumentumkezelő metaadatok
         ├── news.py               # Hírek
         └── time_entries.py       # Időbejegyzések

@@ -3,7 +3,7 @@
   "api_key": "YOUR_API_KEY",
   "project_id": "your-project-id",
   "output_dir": "output",
-  "modules": ["project", "versions", "files", "dmsf", "issues", "wiki", "news", "time_entries"],
+  "modules": ["project", "versions", "files", "documents", "dmsf", "issues", "wiki", "news", "time_entries"],
   "compact_fields": false,
   "split_limit_words": 450000
 }

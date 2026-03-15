@@ -19,6 +19,7 @@ Rm2Book/
         ├── project.py        # Projekt info, tagok
         ├── issues.py         # Hibajegyek + teljes history
         ├── wiki.py           # Wiki + verzió history (alprojektekkel)
+        ├── documents.py      # Redmine beépített dokumentumok
         ├── dmsf.py           # DMSF dokumentumkezelő metaadatok
         ├── news.py           # Hírek
         ├── versions.py       # Verziók/mérföldkövek
@@ -61,7 +62,7 @@ Minden modul egyetlen `export(client, project_id, config)` függvényt exportál
 
 | Fájl | Tartalom |
 |------|----------|
-| `01_project_and_meta.md` | Projekt info, tagok, verziók, kategóriák, fájlok metaadatai, DMSF dokumentumfa |
+| `01_project_and_meta.md` | Projekt info, tagok, verziók, kategóriák, fájlok, dokumentumok, DMSF dokumentumfa |
 | `02_issues.md` | Minden hibajegy teljes történettel (automatikus darabolás `split_limit_words` alapján: `02_issues_001.md`, `02_issues_002.md`, stb.) |
 | `03_wiki.md` | Minden wiki oldal (alprojektekből is, rekurzívan), minden verzió időbélyeggel |
 | `04_activity.md` | Hírek, időbejegyzések |
@@ -234,8 +235,8 @@ T=Tracker A=Activity
   "project_id": "project-id",                     // Kötelező
   "output_dir": "output",                         // Alapértelmezett: "output"
   "modules": ["project", "versions", "files",     // Alapértelmezett: mind
-               "dmsf", "issues", "wiki", "news",
-               "time_entries"],
+               "documents", "dmsf", "issues",
+               "wiki", "news", "time_entries"],
   "compact_fields": false,                         // true: 1 betűs kódok + legenda
   "split_limit_words": 450000                      // Darabolási limit szószámban
 }
