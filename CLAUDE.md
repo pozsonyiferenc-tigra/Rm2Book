@@ -18,7 +18,8 @@ Rm2Book/
         ├── __init__.py
         ├── project.py        # Projekt info, tagok
         ├── issues.py         # Hibajegyek + teljes history
-        ├── wiki.py           # Wiki + verzió history
+        ├── wiki.py           # Wiki + verzió history (alprojektekkel)
+        ├── dmsf.py           # DMSF dokumentumkezelő metaadatok
         ├── news.py           # Hírek
         ├── versions.py       # Verziók/mérföldkövek
         ├── time_entries.py   # Időbejegyzések
@@ -52,15 +53,17 @@ Minden modul egyetlen `export(client, project_id, config)` függvényt exportál
 - [x] NotebookLM source limit: **Minél kevesebb fájl**, `split_limit_words`-szel szabályozható
 - [x] Textile→Markdown konverzió: **Nem**, felesleges — az AI ugyanúgy érti a Textile-t
 - [x] Csatolmányok: **Csak metaadat** (fájlnév, méret, feltöltő, dátum)
-- [x] Több projekt: **Nem**, egyetlen projekt exportálása
+- [x] Több projekt: **Nem**, egyetlen projekt exportálása (de a wiki rekurzívan bejárja az alprojekteket)
+- [x] Alprojekt wikik: **Rekurzív** — teljes fa, projekt-azonosító a fejlécben `## PageTitle [project-id]`
+- [x] DMSF: **Metaadat + leírások** — mappa-fa, fájl revíziók, binary nélkül
 
 ## Output fájl struktúra
 
 | Fájl | Tartalom |
 |------|----------|
-| `01_project_and_meta.md` | Projekt info, tagok, verziók, kategóriák, fájlok metaadatai |
+| `01_project_and_meta.md` | Projekt info, tagok, verziók, kategóriák, fájlok metaadatai, DMSF dokumentumfa |
 | `02_issues.md` | Minden hibajegy teljes történettel (automatikus darabolás `split_limit_words` alapján: `02_issues_001.md`, `02_issues_002.md`, stb.) |
-| `03_wiki.md` | Minden wiki oldal, minden verzió időbélyeggel |
+| `03_wiki.md` | Minden wiki oldal (alprojektekből is, rekurzívan), minden verzió időbélyeggel |
 | `04_activity.md` | Hírek, időbejegyzések |
 
 ## Kompakt output formátum specifikáció
@@ -136,19 +139,46 @@ Szabályok:
 ### Wiki formátum
 
 ```markdown
-# Wiki (12 pages)
+# Wiki (42 pages, 5 projects)
 
-## PageTitle
+## PageTitle [BGA]
 [v3 240320 Kiss J.] Current content here...
 [v2 240215 Nagy É.] Previous version content...
 [v1 231101 Kiss J.] Initial content...
+
+## OtherPage [BGA-sub1]
+[v1 240101 Kiss J.] Content from subproject...
 ```
 
 Szabályok:
-- Oldalanként `## PageTitle`
+- Oldalanként `## PageTitle [project-id]` — projekt-azonosító szögletes zárójelben
+- Alprojektek wikijét rekurzívan bejárja (teljes fa)
+- Fő projekt oldalai először, utána alprojektek mélységi sorrendben
 - Minden verzió: `[vN YYMMDD Author]` prefix, aztán tartalom
 - Legfrissebb verzió elöl
 - Tartalom nyers Textile marad (AI ugyanúgy érti)
+
+### DMSF formátum
+
+```markdown
+## DMSF Documents
+
+📁 Requirements/
+  📎 spec.pdf v3 (Kiss J. 240315 1.2MB) "Updated requirements"
+  📎 design.docx v1 (Nagy É. 240110 450KB)
+  📁 Archive/
+    📎 old_spec.pdf (2 revisions)
+      [v2 240201 Kiss J. 980KB] "Updated"
+      [v1 231101 Kiss J. 900KB] "Initial"
+📁 Reports/
+  📎 monthly.xlsx v5 (Kovács P. 240301 2.1MB) "March report"
+```
+
+Szabályok:
+- Mappa struktúra behúzással (2 space/szint)
+- Fájlok: `📎 fájlnév vN (szerző dátum méret) "leírás"`
+- Több revízió esetén: fejléc + verzió lista
+- Ha DMSF plugin nincs telepítve, graceful skip
 
 ### Projekt/meta formátum
 
@@ -188,6 +218,8 @@ T=Tracker A=Activity
 - [x] `ID:szám` formátum mindenhol (nem `#szám`) — NotebookLM-ben kereshető
 - [x] `---` elválasztó minden issue után
 - [x] Compact mód: `compact_fields: true` — 1 betűs kódok + legenda
+- [x] Alprojekt wikik: rekurzív bejárás, `## PageTitle [project-id]` formátum
+- [x] DMSF modul: mappa-fa + fájl metaadatok + revíziók, graceful skip ha nincs DMSF
 
 ## Nyitott kérdések
 - [ ] Alapértelmezett értékek kihagyása (pl. P:Normal nem kerül be)
@@ -202,7 +234,7 @@ T=Tracker A=Activity
   "project_id": "project-id",                     // Kötelező
   "output_dir": "output",                         // Alapértelmezett: "output"
   "modules": ["project", "versions", "files",     // Alapértelmezett: mind
-               "issues", "wiki", "news",
+               "dmsf", "issues", "wiki", "news",
                "time_entries"],
   "compact_fields": false,                         // true: 1 betűs kódok + legenda
   "split_limit_words": 450000                      // Darabolási limit szószámban

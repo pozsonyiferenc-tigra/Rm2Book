@@ -11,8 +11,9 @@ MODULE_ORDER = [
     "project",       # -> 01_project_and_meta.md
     "versions",      # -> 01_project_and_meta.md
     "files",         # -> 01_project_and_meta.md
+    "dmsf",          # -> 01_project_and_meta.md
     "issues",        # -> 02_issues.md (may split)
-    "wiki",          # -> 03_wiki.md
+    "wiki",          # -> 03_wiki.md (includes subproject wikis)
     "news",          # -> 04_activity.md
     "time_entries",  # -> 04_activity.md
 ]

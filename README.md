@@ -4,7 +4,7 @@ Redmine projekt teljes exportálása AI-barát markdown formátumba. NotebookLM-
 
 ## Funkciók
 
-- **Teljes adatkinyerés**: hibajegyek, wiki, hírek, verziók, időbejegyzések, fájlok, projekt info
+- **Teljes adatkinyerés**: hibajegyek, wiki (alprojektekkel), DMSF dokumentumok, hírek, verziók, időbejegyzések, fájlok, projekt info
 - **Teljes történet**: minden journal entry, minden wiki verzió, időbélyeggel
 - **AI-optimalizált output**: kompakt, strukturált markdown, minimális token-overhead
 - **Automatikus darabolás**: `split_limit_words` alapján, issue-határokon (egy issue soha nem szakad ketté)
@@ -40,7 +40,7 @@ Szerkeszd a `config.json` fájlt:
   "api_key": "your-api-key-here",
   "project_id": "my-project",
   "output_dir": "output",
-  "modules": ["project", "versions", "files", "issues", "wiki", "news", "time_entries"],
+  "modules": ["project", "versions", "files", "dmsf", "issues", "wiki", "news", "time_entries"],
   "compact_fields": false,
   "split_limit_words": 450000
 }
@@ -121,9 +121,9 @@ Output: output/
 
 | Fájl | Tartalom |
 |------|----------|
-| `01_project_and_meta.md` | Projekt info, tagok, verziók, kategóriák, fájl metaadatok |
+| `01_project_and_meta.md` | Projekt info, tagok, verziók, kategóriák, fájl metaadatok, DMSF dokumentumfa |
 | `02_issues.md` | Minden hibajegy teljes változás-történettel (darabolva: `02_issues_001.md`, `_002.md`, stb.) |
-| `03_wiki.md` | Minden wiki oldal, minden korábbi verzió időbélyeggel |
+| `03_wiki.md` | Minden wiki oldal (alprojektekből is, rekurzívan), minden korábbi verzió időbélyeggel |
 | `04_activity.md` | Hírek, időbejegyzések |
 
 Ha az issue-k össz szószáma meghaladja a `split_limit_words` értéket (alapért. 450K), automatikusan darabolódik: `02_issues_001.md`, `02_issues_002.md`, stb. A darabolás mindig issue-határokon történik — egy issue soha nem szakad ketté.
@@ -167,16 +167,36 @@ Compact módban a fájl tetejére legenda kerül:
 S=Status P=Priority A=Assigned V=Version C=Category T=Tracker
 ```
 
-### Wiki
+### Wiki (alprojektekkel)
 
 ```markdown
-## PageTitle
+# Wiki (42 pages, 5 projects)
+
+## PageTitle [my-project]
 [v3 240320 Kiss J.] Aktuális tartalom...
 [v2 240215 Nagy É.] Korábbi verzió tartalma...
 [v1 231101 Kiss J.] Eredeti tartalom...
+
+## OtherPage [sub-project-1]
+[v1 240101 Kiss J.] Alprojekt wiki tartalom...
 ```
 
-Minden verzió megjelenik, legfrissebb elöl, időbélyeggel és szerzővel.
+Minden verzió megjelenik, legfrissebb elöl, időbélyeggel és szerzővel. A projekt-azonosító szögletes zárójelben jelenik meg minden oldal fejlécében. Az alprojektek rekurzívan bejárásra kerülnek (teljes fa).
+
+### DMSF dokumentumok
+
+```markdown
+## DMSF Documents
+
+📁 Requirements/
+  📎 spec.pdf v3 (Kiss J. 240315 1.2MB) "Updated requirements"
+  📁 Archive/
+    📎 old_spec.pdf (2 revisions)
+      [v2 240201 Kiss J. 980KB] "Updated"
+      [v1 231101 Kiss J. 900KB] "Initial"
+```
+
+Mappa struktúra behúzással, fájlok metaadatokkal és revízió-történettel. Ha a DMSF plugin nincs telepítve, a modul automatikusan kimarad.
 
 ### Projekt meta
 
@@ -217,6 +237,9 @@ v2.0 | Open | Due:240601 | "Release description"
 | Gyermek issue | `^ID:szám Subject` | `^ID:55 Fix login CSS` |
 | Issue elválasztó | `---` | Vízszintes vonal minden issue után |
 | Egyéni mező | `cf:Név:Érték` | `cf:Client:ACME` |
+| Wiki oldal | `## Title [project-id]` | `## HomePage [BGA]` |
+| DMSF mappa | `📁 Név/` | `📁 Requirements/` |
+| DMSF fájl | `📎 fájl vN (szerző dátum méret) "leírás"` | `📎 spec.pdf v3 (Kiss J. 240315 1.2MB)` |
 
 ### Kapcsolat típusok
 
@@ -238,8 +261,9 @@ Minden modul külön ki-/bekapcsolható a `modules` config mezőben:
 | `project` | Projekt info, tagok, kategóriák, státuszok, prioritások | `01_project_and_meta.md` |
 | `versions` | Verziók / mérföldkövek | `01_project_and_meta.md` |
 | `files` | Feltöltött fájlok metaadatai | `01_project_and_meta.md` |
+| `dmsf` | DMSF dokumentumfa + fájl metaadatok + revíziók | `01_project_and_meta.md` |
 | `issues` | Hibajegyek + teljes változás-történet | `02_issues.md` |
-| `wiki` | Wiki oldalak + minden korábbi verzió | `03_wiki.md` |
+| `wiki` | Wiki oldalak + minden korábbi verzió (alprojektekkel, rekurzív) | `03_wiki.md` |
 | `news` | Projekt hírek | `04_activity.md` |
 | `time_entries` | Időbejegyzések | `04_activity.md` |
 
@@ -260,7 +284,8 @@ Rm2Book/
         ├── versions.py           # Verziók
         ├── files.py              # Fájl metaadatok
         ├── issues.py             # Hibajegyek + history
-        ├── wiki.py               # Wiki + verzió history
+        ├── wiki.py               # Wiki + verzió history (alprojektekkel)
+        ├── dmsf.py               # DMSF dokumentumkezelő metaadatok
         ├── news.py               # Hírek
         └── time_entries.py       # Időbejegyzések
 ```
