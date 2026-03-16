@@ -2,6 +2,7 @@
   "redmine_url": "https://your-redmine.example.com",
   "api_key": "YOUR_API_KEY",
   "project_id": "your-project-id",
+  "project_ids": ["project-1", "project-2"],
   "output_dir": "output",
   "modules": ["project", "versions", "files", "documents", "dmsf", "issues", "wiki", "news", "time_entries"],
   "compact_fields": false,

@@ -255,10 +255,10 @@ def export(client, project_id, config):
     print(f"\r  -> {len(all_issues)} issues fetched.          ")
 
     if not all_issues:
-        return {"02_issues.md": "# Issues (0)\n"}
+        return {"02_issues.md": f"# Issues [{project_id}] (0)\n"}
 
     # Build header
-    header = f"# Issues ({len(all_issues)})\n"
+    header = f"# Issues [{project_id}] ({len(all_issues)})\n"
     if compact:
         header += f"{LEGEND}\n"
     header += "\n---\n\n"

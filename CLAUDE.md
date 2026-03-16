@@ -18,7 +18,7 @@ Rm2Book/
         ├── __init__.py
         ├── project.py        # Projekt info, tagok
         ├── issues.py         # Hibajegyek + teljes history
-        ├── wiki.py           # Wiki + verzió history (alprojektekkel)
+        ├── wiki.py           # Wiki + verzió history
         ├── documents.py      # Redmine beépített dokumentumok
         ├── dmsf.py           # DMSF dokumentumkezelő metaadatok
         ├── news.py           # Hírek
@@ -54,17 +54,17 @@ Minden modul egyetlen `export(client, project_id, config)` függvényt exportál
 - [x] NotebookLM source limit: **Minél kevesebb fájl**, `split_limit_words`-szel szabályozható
 - [x] Textile→Markdown konverzió: **Nem**, felesleges — az AI ugyanúgy érti a Textile-t
 - [x] Csatolmányok: **Csak metaadat** (fájlnév, méret, feltöltő, dátum)
-- [x] Több projekt: **Nem**, egyetlen projekt exportálása (de a wiki rekurzívan bejárja az alprojekteket)
-- [x] Alprojekt wikik: **Rekurzív** — teljes fa, projekt-azonosító a fejlécben `## PageTitle [project-id]`
+- [x] Több projekt: **Igen**, `project_ids` listával, külön-külön exportálva, prefix a fájlnevekben
+- [x] Alprojekt kezelés: **Nincs rekurzió** — minden projekt önállóan, a projekt összefoglaló tartalmazza a szülőt és leszármazottakat
 - [x] DMSF: **Metaadat + leírások** — mappa-fa, fájl revíziók, binary nélkül
 
 ## Output fájl struktúra
 
 | Fájl | Tartalom |
-|------|----------|
+| --- | --- |
 | `01_project_and_meta.md` | Projekt info, tagok, verziók, kategóriák, fájlok, dokumentumok, DMSF dokumentumfa |
 | `02_issues.md` | Minden hibajegy teljes történettel (automatikus darabolás `split_limit_words` alapján: `02_issues_001.md`, `02_issues_002.md`, stb.) |
-| `03_wiki.md` | Minden wiki oldal (alprojektekből is, rekurzívan), minden verzió időbélyeggel |
+| `03_wiki.md` | Minden wiki oldal, minden verzió időbélyeggel |
 | `04_activity.md` | Hírek, időbejegyzések |
 
 ## Kompakt output formátum specifikáció
@@ -86,7 +86,7 @@ Minden modul egyetlen `export(client, project_id, config)` függvényt exportál
 
 Fájl fejléc (egyszer):
 ```markdown
-# Issues (342)
+# Issues [my-project] (342)
 
 ---
 ```
@@ -140,24 +140,21 @@ Szabályok:
 ### Wiki formátum
 
 ```markdown
-# Wiki (42 pages, 5 projects)
+# Wiki [my-project] (12 pages)
 
-## PageTitle [BGA]
+## PageTitle
 [v3 240320 Kiss J.] Current content here...
 [v2 240215 Nagy É.] Previous version content...
 [v1 231101 Kiss J.] Initial content...
-
-## OtherPage [BGA-sub1]
-[v1 240101 Kiss J.] Content from subproject...
 ```
 
 Szabályok:
-- Oldalanként `## PageTitle [project-id]` — projekt-azonosító szögletes zárójelben
-- Alprojektek wikijét rekurzívan bejárja (teljes fa)
-- Fő projekt oldalai először, utána alprojektek mélységi sorrendben
+- Fájl fejléc: `# Wiki [project-id] (N pages)` — projekt-azonosító a fejlécben
+- Oldalanként `## PageTitle`
 - Minden verzió: `[vN YYMMDD Author]` prefix, aztán tartalom
 - Legfrissebb verzió elöl
 - Tartalom nyers Textile marad (AI ugyanúgy érti)
+- Nincs alprojekt rekurzió — minden projekt külön exportálódik
 
 ### DMSF formátum
 
@@ -219,7 +216,7 @@ T=Tracker A=Activity
 - [x] `ID:szám` formátum mindenhol (nem `#szám`) — NotebookLM-ben kereshető
 - [x] `---` elválasztó minden issue után
 - [x] Compact mód: `compact_fields: true` — 1 betűs kódok + legenda
-- [x] Alprojekt wikik: rekurzív bejárás, `## PageTitle [project-id]` formátum
+- [x] Multi-projekt: `project_ids` lista, prefix a fájlnevekben, projekt-azonosító a fejlécekben
 - [x] DMSF modul: mappa-fa + fájl metaadatok + revíziók, graceful skip ha nincs DMSF
 
 ## Nyitott kérdések
@@ -232,7 +229,8 @@ T=Tracker A=Activity
 {
   "redmine_url": "https://redmine.example.com",  // Kötelező
   "api_key": "YOUR_API_KEY",                      // Kötelező
-  "project_id": "project-id",                     // Kötelező
+  "project_id": "project-id",                     // Kötelező (ha project_ids nincs)
+  "project_ids": ["proj-1", "proj-2"],            // Opcionális: több projekt egyszerre
   "output_dir": "output",                         // Alapértelmezett: "output"
   "modules": ["project", "versions", "files",     // Alapértelmezett: mind
                "documents", "dmsf", "issues",

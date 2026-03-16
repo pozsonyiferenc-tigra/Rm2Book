@@ -133,7 +133,7 @@ Ha az issue-k össz szószáma meghaladja a `split_limit_words` értéket (alap�
 ### Issue (verbose mód, alapértelmezett)
 
 ```markdown
-## ID:42 [Bug] Login button not working (Closed)
+## ID:42 [Bug] Login button not working (Closed) [my-project]
 Priority:High | Assigned:Kiss János | Version:v2.0 | Category:Backend | 240115..240320 | Done:70%
 
 A login gomb nem reagál kattintásra...
@@ -150,7 +150,7 @@ A login gomb nem reagál kattintásra...
 ### Issue (compact mód, `compact_fields: true`)
 
 ```markdown
-## ID:42 [Bug] Login button not working (Closed)
+## ID:42 [Bug] Login button not working (Closed) [my-project]
 P:High | A:Kiss János | V:v2.0 | C:Backend | 240115..240320 | Done:70%
 
 A login gomb nem reagál kattintásra...
@@ -220,7 +220,7 @@ v2.0 | Open | Due:240601 | "Release description"
 [240301 Kiss J.] "News title" Content here...
 
 # Time entries (128)
-[240301 Kiss J. ID:42 Dev 2.5h] "Implemented login fix"
+[240301 Kiss J. ID:42 Dev 2.5h] [my-project] "Implemented login fix"
 ```
 
 ## Formátum konvenciók

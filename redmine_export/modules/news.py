@@ -11,7 +11,7 @@ def export(client, project_id, config):
     if not items:
         return {}
 
-    lines = [f"# News ({len(items)})\n"]
+    lines = [f"# News [{project_id}] ({len(items)})\n"]
     for n in items:
         author = short_name(n.get("author", {}).get("name", ""))
         date = fmt_date(n.get("created_on", ""))

@@ -44,10 +44,19 @@ def main():
         config = json.load(f)
 
     # Validate required fields
-    for field in ("redmine_url", "api_key", "project_id"):
+    for field in ("redmine_url", "api_key"):
         if not config.get(field) or config[field].startswith("YOUR_"):
             print(f"Missing or placeholder value for '{field}' in {args.config}")
             sys.exit(1)
+
+    # Resolve project list: project_ids (list) or project_id (string)
+    project_ids = config.get("project_ids")
+    if not project_ids:
+        single = config.get("project_id")
+        if not single or single.startswith("YOUR_"):
+            print(f"Missing 'project_id' or 'project_ids' in {args.config}")
+            sys.exit(1)
+        project_ids = [single]
 
     # Apply CLI overrides
     if args.output_dir:
@@ -55,13 +64,23 @@ def main():
     if args.modules:
         config["modules"] = args.modules
 
-    # Run export
-    print(f"Rm2Book - Exporting project: {config['project_id']}")
+    multi = len(project_ids) > 1
+    client = RedmineClient(config["redmine_url"], config["api_key"])
+
+    print(f"Rm2Book - Exporting {len(project_ids)} project(s)")
     print(f"Redmine: {config['redmine_url']}")
     print(f"Output: {config.get('output_dir', 'output')}/")
 
-    client = RedmineClient(config["redmine_url"], config["api_key"])
-    run_export(client, config["project_id"], config)
+    for pid in project_ids:
+        prefix = pid if multi else ""
+        print(f"\n{'='*60}")
+        print(f"  Project: {pid}")
+        print(f"{'='*60}")
+        run_export(client, pid, config, prefix=prefix)
+
+    if multi:
+        print(f"\n{'='*60}")
+        print(f"All {len(project_ids)} projects exported.")
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ MODULE_ORDER = [
     "documents",     # -> 01_project_and_meta.md
     "dmsf",          # -> 01_project_and_meta.md
     "issues",        # -> 02_issues.md (may split)
-    "wiki",          # -> 03_wiki.md (includes subproject wikis)
+    "wiki",          # -> 03_wiki.md
     "news",          # -> 04_activity.md
     "time_entries",  # -> 04_activity.md
 ]
@@ -22,8 +22,14 @@ MODULE_ORDER = [
 MAX_WORDS = 450000  # Safety margin under NotebookLM's 500K limit
 
 
-def run_export(client, project_id, config):
+def run_export(client, project_id, config, prefix=""):
     """Run all enabled modules and write output files.
+
+    Args:
+        client: RedmineClient instance
+        project_id: Redmine project identifier string
+        config: Configuration dict
+        prefix: Optional filename prefix (e.g. "BGA" -> "BGA_01_project_and_meta.md")
 
     Returns:
         dict with export statistics.
@@ -57,20 +63,21 @@ def run_export(client, project_id, config):
             print(f"  [!] Error: {e}")
             stats[module_name] = f"error: {e}"
 
-    # Write files with word count check
+    # Write files with word count check, applying prefix
     print(f"\n--- Writing output ---")
     total_words = 0
     for filename, content in sorted(all_files.items()):
-        filepath = os.path.join(output_dir, filename)
+        out_filename = f"{prefix}_{filename}" if prefix else filename
+        filepath = os.path.join(output_dir, out_filename)
         wc = word_count(content)
         total_words += wc
 
         if wc > MAX_WORDS:
-            print(f"  [!] {filename}: {wc} words exceeds {MAX_WORDS} limit!")
+            print(f"  [!] {out_filename}: {wc} words exceeds {MAX_WORDS} limit!")
 
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
-        print(f"  {filename} ({wc:,} words, {len(content):,} chars)")
+        print(f"  {out_filename} ({wc:,} words, {len(content):,} chars)")
 
     elapsed = time.time() - start
     print(f"\n--- Done ---")

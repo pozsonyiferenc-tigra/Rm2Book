@@ -1,6 +1,22 @@
-"""Project overview: info, members, trackers, statuses, priorities, categories."""
+"""Project overview: info, members, trackers, statuses, priorities, categories, project tree."""
 
 from redmine_export import fmt_date_only
+
+
+def _build_project_tree(all_projects, project_numeric_id, indent=0):
+    """Build indented tree of descendant projects."""
+    children = [
+        p for p in all_projects
+        if p.get("parent", {}).get("id") == project_numeric_id
+    ]
+    lines = []
+    for child in sorted(children, key=lambda p: p.get("name", "")):
+        cid = child.get("identifier", "")
+        cname = child.get("name", cid)
+        prefix = "  " * indent + "- "
+        lines.append(f"{prefix}{cid} ({cname})")
+        lines.extend(_build_project_tree(all_projects, child.get("id"), indent + 1))
+    return lines
 
 
 def export(client, project_id, config):
@@ -12,11 +28,12 @@ def export(client, project_id, config):
         "include": "trackers,issue_categories,enabled_modules"
     })
     if not data or "project" not in data:
-        return {"01_project_and_meta.md": "# Project: unknown\n"}
+        return {"01_project_and_meta.md": f"# Project: {project_id}\n"}
 
     p = data["project"]
     name = p.get("name", project_id)
     pid = p.get("identifier", "")
+    numeric_id = p.get("id")
     created = fmt_date_only(p.get("created_on", ""))
     public = "yes" if p.get("is_public") else "no"
 
@@ -31,6 +48,30 @@ def export(client, project_id, config):
     desc = p.get("description", "")
     if desc:
         lines.append(desc)
+        lines.append("")
+
+    # --- Project Tree: parent + descendants ---
+    print("  Project tree...")
+    all_projects = client.get_all("/projects.json", "projects", params={"limit": 100})
+
+    tree_lines = []
+
+    # Show parent chain
+    if parent:
+        parent_id = parent.get("id")
+        parent_proj = next((pp for pp in all_projects if pp.get("id") == parent_id), None)
+        if parent_proj:
+            tree_lines.append(f"Parent: {parent_proj.get('identifier', '')} ({parent_proj.get('name', '')})")
+
+    # Show descendants
+    descendants = _build_project_tree(all_projects, numeric_id)
+    if descendants:
+        tree_lines.append("Children:")
+        tree_lines.extend(descendants)
+
+    if tree_lines:
+        lines.append("## Project Tree")
+        lines.extend(tree_lines)
         lines.append("")
 
     # --- Members ---

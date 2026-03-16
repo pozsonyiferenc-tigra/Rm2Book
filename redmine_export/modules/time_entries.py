@@ -21,7 +21,7 @@ def export(client, project_id, config):
         return {}
 
     print(f"\r  -> {len(items)} time entries          ")
-    lines = [f"\n# Time entries ({len(items)})\n"]
+    lines = [f"\n# Time entries [{project_id}] ({len(items)})\n"]
 
     for t in items:
         date = fmt_date_only(t.get("spent_on", ""))
