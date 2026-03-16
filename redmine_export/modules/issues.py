@@ -265,33 +265,48 @@ def export(client, project_id, config):
 
     # Format all issues, split by word count if needed
     max_words = config.get("split_limit_words", DEFAULT_SPLIT_LIMIT)
-    files = {}
-    current_content = header
-    file_num = 1
+
+    # Phase 1: split issues into chunks (each chunk = one file)
+    chunks = []  # list of (content_without_toc, issue_list)
+    current_content = ""
+    current_issues = []
 
     for issue in all_issues:
         formatted = _format_issue(issue, lookups, compact=compact)
+        iid = issue.get("id", "")
+        tracker = issue.get("tracker", {}).get("name", "")
+        subject = issue.get("subject", "")
+        status = issue.get("status", {}).get("name", "")
 
-        # Check if adding this issue would exceed limit
         combined = current_content + formatted + "\n"
-        if len(combined.split()) > max_words and current_content != header:
-            # Save current file and start new one
-            fname = f"02_issues_{file_num:03d}.md" if file_num > 1 or True else "02_issues.md"
-            files[fname] = current_content
-            file_num += 1
-            current_content = header + formatted + "\n"
+        if len(combined.split()) > max_words and current_content:
+            chunks.append((current_content, current_issues))
+            current_content = formatted + "\n"
+            current_issues = [(iid, tracker, subject, status)]
         else:
             current_content = combined
+            current_issues.append((iid, tracker, subject, status))
 
-    # Save last file
-    if file_num == 1:
-        files["02_issues.md"] = current_content
-    else:
-        files[f"02_issues_{file_num:03d}.md"] = current_content
-        # Rename first file if we split
-        if "02_issues.md" not in files and "02_issues_001.md" not in files:
-            pass  # Already named correctly
+    if current_content:
+        chunks.append((current_content, current_issues))
 
-    if file_num > 1:
-        print(f"  -> Split into {file_num} files")
+    # Phase 2: build files with TOC at top
+    files = {}
+    for i, (content, issue_list) in enumerate(chunks):
+        # Build TOC
+        toc_lines = ["## Contents\n"]
+        for iid, tracker, subject, status in issue_list:
+            toc_lines.append(f"- ID:{iid} [{tracker}] {subject} ({status})")
+        toc_lines.append("\n---\n")
+        toc = "\n".join(toc_lines)
+
+        full = header + toc + content
+
+        if len(chunks) == 1:
+            files["02_issues.md"] = full
+        else:
+            files[f"02_issues_{i+1:03d}.md"] = full
+
+    if len(chunks) > 1:
+        print(f"  -> Split into {len(chunks)} files")
     return files
