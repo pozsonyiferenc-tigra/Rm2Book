@@ -38,7 +38,7 @@ Szerkeszd a `config.json` fájlt:
 {
   "redmine_url": "https://redmine.example.com",
   "api_key": "your-api-key-here",
-  "project_id": "my-project",
+  "project_ids": ["my-project"],
   "output_dir": "output",
   "modules": ["project", "versions", "files", "documents", "dmsf", "issues", "wiki", "news", "time_entries"],
   "compact_fields": false,
@@ -52,7 +52,7 @@ Szerkeszd a `config.json` fájlt:
 |------|----------|-----------------|--------|
 | `redmine_url` | igen | — | Redmine alap URL (perjel nélkül) |
 | `api_key` | igen | — | Redmine API kulcs |
-| `project_id` | igen | — | Projekt azonosító (az URL-ből: `/projects/ez-az-id`) |
+| `project_ids` | igen | — | Projekt azonosító(k) listája, pl. `["BGA"]` vagy `["BGA", "KPTR"]`. Több projektnél prefix kerül a fájlnevekbe. |
 | `output_dir` | nem | `output` | Kimeneti könyvtár |
 | `modules` | nem | mind | Futtatandó modulok listája |
 | `compact_fields` | nem | `false` | `true`: tömör 1 betűs kódok (P:, S:, A:), `false`: teljes szavak (Priority:, Status:, Assigned:) |

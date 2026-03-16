@@ -229,8 +229,7 @@ T=Tracker A=Activity
 {
   "redmine_url": "https://redmine.example.com",  // Kötelező
   "api_key": "YOUR_API_KEY",                      // Kötelező
-  "project_id": "project-id",                     // Kötelező (ha project_ids nincs)
-  "project_ids": ["proj-1", "proj-2"],            // Opcionális: több projekt egyszerre
+  "project_ids": ["project-id"],                   // Kötelező: egy vagy több projekt
   "output_dir": "output",                         // Alapértelmezett: "output"
   "modules": ["project", "versions", "files",     // Alapértelmezett: mind
                "documents", "dmsf", "issues",
