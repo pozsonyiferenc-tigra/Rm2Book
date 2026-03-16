@@ -13,7 +13,7 @@ def export(client, project_id, config):
     items = client.get_all(
         "/time_entries.json",
         "time_entries",
-        params={"project_id": project_id},
+        params={"project_id": project_id, "subproject_id": "!*"},
         on_progress=on_progress,
     )
 

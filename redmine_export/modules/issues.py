@@ -246,6 +246,7 @@ def export(client, project_id, config):
         "issues",
         params={
             "project_id": project_id,
+            "subproject_id": "!*",
             "status_id": "*",
             "sort": "id:asc",
             "include": "journals,attachments,relations,children",
