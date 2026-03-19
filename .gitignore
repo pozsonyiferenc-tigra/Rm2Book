@@ -1,5 +1,24 @@
+# Config files with API keys
+*.config.json
 config.json
+!config.example.json
+
+# Output directories
 output/
+BGA/
+ARE/
+KPTR/
+ESZE*R/
+
+# Claude Code
+.claude/
+
+# Python
 __pycache__/
 *.pyc
+
+# macOS
 .DS_Store
+
+# Plans (local dev notes)
+plan.md

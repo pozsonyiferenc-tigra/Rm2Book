@@ -292,14 +292,19 @@ def export(client, project_id, config):
         chunks.append((current_content, current_issues))
 
     # Phase 2: build files with TOC at top
+    issue_toc = config.get("issue_toc", "full")
     files = {}
     for i, (content, issue_list) in enumerate(chunks):
-        # Build TOC
-        toc_lines = ["## Contents\n"]
-        for iid, tracker, subject, status in issue_list:
-            toc_lines.append(f"- ID:{iid} [{tracker}] {subject} ({status})")
-        toc_lines.append("\n---\n")
-        toc = "\n".join(toc_lines)
+        toc = ""
+        if issue_toc == "full":
+            toc_lines = ["## Contents\n"]
+            for iid, tracker, subject, status in issue_list:
+                toc_lines.append(f"- ID:{iid} [{tracker}] {subject} ({status})")
+            toc_lines.append("\n---\n")
+            toc = "\n".join(toc_lines)
+        elif issue_toc == "compact":
+            ids = ", ".join(f"ID:{iid}" for iid, _, _, _ in issue_list)
+            toc = f"## Contents\n{ids}\n\n---\n\n"
 
         full = header + toc + content
 

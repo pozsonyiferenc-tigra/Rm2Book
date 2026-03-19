@@ -57,6 +57,8 @@ Szerkeszd a `config.json` fájlt:
 | `modules` | nem | mind | Futtatandó modulok listája |
 | `compact_fields` | nem | `false` | `true`: tömör 1 betűs kódok (P:, S:, A:), `false`: teljes szavak (Priority:, Status:, Assigned:) |
 | `split_limit_words` | nem | `450000` | Issue fájl darabolási limit szószámban. Issue-határokon vág, egy issue soha nem szakad ketté. |
+| `wiki_versions` | nem | `"all"` | `"all"`: minden verzió hash-alapú de-duplikációval (azonos tartalmú verziók kihagyása), `"latest"`: csak a legfrissebb verzió oldalanként |
+| `issue_toc` | nem | `"full"` | `"full"`: teljes tartalomjegyzék (ID, tracker, subject, status), `"compact"`: csak issue ID-k, `"none"`: nincs TOC |
 
 ### API kulcs megszerzése
 

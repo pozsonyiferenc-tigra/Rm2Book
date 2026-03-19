@@ -5,5 +5,10 @@
   "output_dir": "output",
   "modules": ["project", "versions", "files", "documents", "dmsf", "issues", "wiki", "news", "time_entries"],
   "compact_fields": false,
-  "split_limit_words": 450000
+  "_compact_fields": "false | true",
+  "split_limit_words": 450000,
+  "wiki_versions": "all",
+  "_wiki_versions": "all | latest",
+  "issue_toc": "full",
+  "_issue_toc": "full | compact | none"
 }

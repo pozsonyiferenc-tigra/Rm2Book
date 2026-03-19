@@ -235,6 +235,8 @@ T=Tracker A=Activity
                "documents", "dmsf", "issues",
                "wiki", "news", "time_entries"],
   "compact_fields": false,                         // true: 1 betűs kódok + legenda
-  "split_limit_words": 450000                      // Darabolási limit szószámban
+  "split_limit_words": 450000,                     // Darabolási limit szószámban
+  "wiki_versions": "all",                           // "all": minden verzió (hash dedup), "latest": csak legfrissebb
+  "issue_toc": "full"                               // "full": teljes TOC, "compact": csak ID-k, "none": nincs TOC
 }
 ```
